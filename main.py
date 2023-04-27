@@ -114,7 +114,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 @app.get("/logout")
 async def logout(response: Response):
     response.delete_cookie(key='access_token')
-    return "cookie deleted"
+    return "Logout Successfull"
 
 
 @app.put("/edit_password")
