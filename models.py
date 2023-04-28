@@ -1,5 +1,6 @@
-from sqlalchemy import String, Integer, Column
+from sqlalchemy import String, Integer, Column, DATE
 from database import Base
+from datetime import date
 
 class StudentTable(Base):
     __tablename__ = "student_login"
@@ -12,3 +13,5 @@ class StudentTable(Base):
     last_name = Column(String)
     phone_number = Column(String, nullable=False)
     address = Column(String)
+    gender = Column(String, nullable=False)
+    dob = Column(DATE)

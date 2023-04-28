@@ -1,13 +1,15 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
 import models
 from database import engine, SessionLocal
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, Field, EmailStr
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from starlette import status
+import re
+
 
 app = FastAPI()
 
@@ -60,14 +62,27 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
                                 detail="Could not validate user")
 
 class StudentLogin(BaseModel):
-    username : str
-    password : str
-    email : str
+    username : str = Field(...,min_length=4)
+    password : str = Field(...,min_length=8)
+    email : EmailStr
     first_name : str
     last_name : str
     phonenumber : str
     address : str
+    gender : str
+    dob : date
 
+    @validator('username')
+    def username_validation(cls, v):
+        assert v.isalnum(), 'must be alphanumeric'
+        return v
+    
+    @validator('gender')
+    def gender_validation(cls, value):
+        if value not in ('male', 'female', 'others'):
+            raise ValueError("gender must be male, female or others")
+        return value
+    
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -89,9 +104,16 @@ async def register_student(student : StudentLogin, db: Session = Depends(get_db)
     new_student.last_name = student.last_name
     new_student.phone_number = student.phonenumber
     new_student.address = student.address
+    new_student.gender = student.gender
+    new_student.dob = student.dob
 
-    db.add(new_student)
-    db.commit()
+    check_user = db.query(models.StudentTable).filter(models.StudentTable.username == student.username).first()
+
+    if check_user:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User Already Existed")
+    else:
+        db.add(new_student)
+        db.commit()
     return "successfull post"
 
 
@@ -131,13 +153,3 @@ async def edit_password(request: Request, user_verification: UserVerification, u
             db.commit()
             return 'Successful'
     return 'Invalid user or request'
-
-# @app.post("/login")
-# async def login(request: Request, db:Session=Depends(get_db)):
-#     form = LoginForm(request)
-#     await form.create_oauth_form()
-#     validate_user_cookie = await login_for_access_token(form_data=form, db=db)
-
-#     if not validate_user_cookie:
-#         return "incorrect username or password"
-#     return "Login Successful"
