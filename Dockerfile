@@ -2,9 +2,9 @@ FROM python:3.10.11
 
 WORKDIR C:\Users\kumar g\application
 
-COPY reqiurements.tct ./
+COPY reqiurements.txt ./
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r reqiurements.txt
 
 COPY . .
 

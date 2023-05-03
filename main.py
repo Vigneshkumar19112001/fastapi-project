@@ -74,13 +74,18 @@ class StudentLogin(BaseModel):
 
     @validator('username')
     def username_validation(cls, v):
-        assert v.isalnum(), 'must be alphanumeric'
+        assert v.isalnum(), 'must be an alphanumeric'
         return v
     
     @validator('gender')
     def gender_validation(cls, value):
         if value not in ('male', 'female', 'others'):
             raise ValueError("gender must be male, female or others")
+        return value
+    
+    @validator('password')
+    def password_validator(cls, value):
+        assert value.isalnum(), 'must be an alphanumeric'
         return value
     
 class Token(BaseModel):
