@@ -1,6 +1,6 @@
 FROM python:3.10.11
 
-WORKDIR C:\Users\kumar g\application
+WORKDIR /Users/kumar g/application
 
 COPY reqiurements.txt ./
 
