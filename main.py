@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine, SessionLocal
 from pydantic import BaseModel, validator, Field, EmailStr
@@ -12,6 +13,19 @@ import re
 
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "https://final-vy64.onrender.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
