@@ -106,6 +106,10 @@ class UserVerification(BaseModel):
     password: str
     new_password: str
 
+class Login(BaseModel):
+    username: str
+    password: str
+
 
 @app.post("/register")
 async def register_student(student : StudentLogin, db: Session = Depends(get_db)):
@@ -137,8 +141,8 @@ async def list_of_students(db:Session=Depends(get_db)):
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db:Session=Depends(get_db)):
-    user = authenticate_user(form_data.username, form_data.password, db)
+async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
+    user = authenticate_user(login.username, login.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
