@@ -109,13 +109,31 @@ class Token(BaseModel):
     token_type: str
 
 class UserVerification(BaseModel):
-    username: str
-    password: str
-    new_password: str
+    username: str = Field(...,min_length=4)
+    password: str = Field(...,min_length=8)
+
+    @validator('password')
+    def password_validator(cls, value):
+        assert value.isalnum(), 'must be an alphanumeric'
+        return value
 
 class Login(BaseModel):
-    username: str
-    password: str
+    username: str = Field(...,min_length=4)
+    password: str = Field(...,min_length=8)
+
+    @validator('password')
+    def password_validator(cls, value):
+        assert value.isalnum(), 'must be an alphanumeric'
+        return value
+
+class ForgetPassword(BaseModel):
+    username: str = Field(...,min_length=4)
+    password: str = Field(...,min_length=8)
+
+    @validator('password')
+    def password_validator(cls, value):
+        assert value.isalnum(), 'must be an alphanumeric'
+        return value
 
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
@@ -163,6 +181,20 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
     token = create_access_token(user.username, user.id, timedelta(minutes=20))
     response.set_cookie(key="access_token", value=token, httponly=True)
     return {'access_token': token, 'token_type': 'bearer'}
+
+
+@app.put("/forget_password", status_code=status.HTTP_205_RESET_CONTENT)
+def forget_password(forget_password: ForgetPassword, db:Session=Depends(get_db)):
+    user = db.query(models.StudentTable).filter(models.StudentTable.email == forget_password.username).first() or db.query(models.StudentTable).filter(models.StudentTable.username == forget_password.username).first()
+
+    if user is not None:
+        user.password = hash_passord(forget_password.password)
+        
+        db.add(user)
+        db.commit()
+        return "Successfully changed"
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="userName or email not found")
+
 
 
 @app.get("/logout", status_code=status.HTTP_200_OK)
