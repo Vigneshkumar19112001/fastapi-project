@@ -44,7 +44,7 @@ def check_password(password, pwd):
     return bcrypt_context.verify(password, pwd)
 
 def authenticate_user(username: str, pwd: str, db):
-    user = db.query(models.StudentTable).filter(models.StudentTable.username == username).first()
+    user = db.query(models.StudentTable).filter(models.StudentTable.username == username).first() or db.query(models.StudentTable).filter(models.StudentTable.email == username).first()
     if not user:
         return False
     if not check_password(pwd, user.password):
@@ -111,7 +111,7 @@ class Login(BaseModel):
     password: str
 
 
-@app.post("/register")
+@app.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_student(student : StudentLogin, db: Session = Depends(get_db)):
     new_student = models.StudentTable()
 
@@ -126,21 +126,24 @@ async def register_student(student : StudentLogin, db: Session = Depends(get_db)
     new_student.dob = student.dob
 
     check_user = db.query(models.StudentTable).filter(models.StudentTable.username == student.username).first()
+    check_email = db.query(models.StudentTable).filter(models.StudentTable.email == student.email).first()
 
     if check_user:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User Already Existed")
+    elif check_email:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="Email Already Existes")
     else:
         db.add(new_student)
         db.commit()
     return "successfull post"
 
 
-@app.get("/student_list")
+@app.get("/student_list", status_code=status.HTTP_200_OK)
 async def list_of_students(db:Session=Depends(get_db)):
     return db.query(models.StudentTable).all()
 
 
-@app.post("/token", response_model=Token)
+@app.post("/token", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
     user = authenticate_user(login.username, login.password, db)
     if not user:
@@ -151,13 +154,13 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
     return {'access_token': token, 'token_type': 'bearer'}
 
 
-@app.get("/logout")
+@app.get("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
     response.delete_cookie(key='access_token')
     return "Logout Successfull"
 
 
-@app.put("/edit_password")
+@app.put("/edit_password", status_code=status.HTTP_205_RESET_CONTENT)
 async def edit_password(request: Request, user_verification: UserVerification, user: dict = Depends(get_current_user), db: Session=Depends(get_db)):
     if user is None:
         return "user not found"
