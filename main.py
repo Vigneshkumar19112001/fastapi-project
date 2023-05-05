@@ -76,6 +76,7 @@ class StudentLogin(BaseModel):
     email : EmailStr
     first_name : str
     last_name : str
+    reg_no : int = Field()
     phonenumber : str
     address : str
     gender : str
@@ -85,6 +86,12 @@ class StudentLogin(BaseModel):
     def username_validation(cls, v):
         assert v.isalnum(), 'must be an alphanumeric'
         return v
+    
+    @validator('reg_no')
+    def validate_reg_no(cls, value):
+        if value == 0:
+            raise ValueError("reg_no should be greater then 0")
+        return value
     
     @validator('gender')
     def gender_validation(cls, value):
@@ -120,6 +127,7 @@ async def register_student(student : StudentLogin, db: Session = Depends(get_db)
     new_student.email = student.email
     new_student.first_name = student.first_name
     new_student.last_name = student.last_name
+    new_student.reg_no =  student.reg_no
     new_student.phone_number = student.phonenumber
     new_student.address = student.address
     new_student.gender = student.gender
@@ -127,11 +135,14 @@ async def register_student(student : StudentLogin, db: Session = Depends(get_db)
 
     check_user = db.query(models.StudentTable).filter(models.StudentTable.username == student.username).first()
     check_email = db.query(models.StudentTable).filter(models.StudentTable.email == student.email).first()
+    check_reg_no = db.query(models.StudentTable).filter(models.StudentTable.reg_no == student.reg_no).first()
 
     if check_user:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User Already Existed")
     elif check_email:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="Email Already Existes")
+    elif check_reg_no:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="reg_no Already Existes")
     else:
         db.add(new_student)
         db.commit()
