@@ -76,7 +76,7 @@ class StudentLogin(BaseModel):
     email : EmailStr
     first_name : str
     last_name : str
-    reg_no : int = Field()
+    reg_no : str
     phonenumber : str
     address : str
     gender : str
