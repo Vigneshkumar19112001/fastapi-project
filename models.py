@@ -13,6 +13,6 @@ class StudentTable(Base):
     last_name = Column(String)
     reg_no = Column(Integer, nullable=False, unique=True)
     phone_number = Column(String, nullable=False)
-    address = Column(String)
+    address = Column(String, nullable=True)
     gender = Column(String, nullable=False)
     dob = Column(DATE)
