@@ -11,7 +11,7 @@ class StudentTable(Base):
     password = Column(String, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String)
-    reg_no = Column(Integer, nullable=False, unique=True)
+    reg_no = Column(String, nullable=False, unique=True)
     phone_number = Column(String, nullable=False)
     address = Column(String, nullable=True)
     gender = Column(String, nullable=False)
