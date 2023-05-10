@@ -109,13 +109,11 @@ class Token(BaseModel):
     token_type: str
 
 class UserVerification(BaseModel):
-    username: str = Field(...,min_length=4)
-    password: str = Field(...,min_length=8)
+    username: str
+    password: str
+    new_password: str
 
-    @validator('password')
-    def password_validator(cls, value):
-        assert value.isalnum(), 'must be an alphanumeric'
-        return value
+    
 
 class Login(BaseModel):
     username: str = Field(...,min_length=4)
@@ -178,7 +176,7 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
-    token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    token = create_access_token(user.username, user.id, timedelta(minutes=2))
     response.set_cookie(key="access_token", value=token, httponly=True)
     return {'access_token': token, 'token_type': 'bearer'}
 
@@ -203,17 +201,25 @@ async def logout(response: Response):
     return "Logout Successfull"
 
 
-@app.put("/edit_password", status_code=status.HTTP_205_RESET_CONTENT)
+@app.post("/edit_password", status_code=status.HTTP_205_RESET_CONTENT)
 async def edit_password(request: Request, user_verification: UserVerification, user: dict = Depends(get_current_user), db: Session=Depends(get_db)):
     if user is None:
         return "user not found"
     student_model = db.query(models.StudentTable).filter(models.StudentTable.id == user.get('id')).first()
 
     if student_model is not None:
-        if user_verification.username == student_model.username and check_password(
-                user_verification.password,student_model.password):
+        if user_verification.username == student_model.username and check_password(user_verification.password,student_model.password):
             student_model.password = hash_passord(user_verification.new_password)
             db.add(student_model)
             db.commit()
             return 'Successful'
     return 'Invalid user or request'
+
+@app.delete("/deleteUser/{id}", status_code=status.HTTP_202_ACCEPTED)
+async def delete_user(id: int, db:Session=Depends(get_db)):
+    student = db.query(models.StudentTable).filter(models.StudentTable.id == id).delete()
+    if student:
+        db.commit()
+        return "user deleted successfully"
+    else:
+        return "user not found"
