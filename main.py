@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine, SessionLocal
 from pydantic import BaseModel, validator, Field, EmailStr
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, date
 from starlette import status
+from typing import List
 import re
 
 
@@ -22,6 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+items = list(range(1, 101))
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
 
@@ -166,8 +168,16 @@ async def register_student(student : StudentLogin, db: Session = Depends(get_db)
 
 
 @app.get("/student_list", status_code=status.HTTP_200_OK)
-async def list_of_students(db:Session=Depends(get_db)):
-    return db.query(models.StudentTable).all()
+async def list_of_students(db:Session=Depends(get_db), page: int = 1, page_size:int = 10):
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+    # paginated_items = items[start_index:end_index]
+    # pageinated_items = db.query(models.StudentTable[start_index:end_index]).all()
+    # return pageinated_items
+    query: Query = db.query(models.StudentTable)
+    paginated_items = query.offset(start_index).limit(page_size).all()
+
+    return paginated_items
 
 
 @app.post("/token", response_model=Token, status_code=status.HTTP_201_CREATED)
