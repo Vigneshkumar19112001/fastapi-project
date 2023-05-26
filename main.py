@@ -14,14 +14,18 @@ import re
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins= ["*"],
-    allow_credentials=True,
-    withCredentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+origins = [
+    "http://localhost",
+    "http://localhost:4200"  # Replace with your frontend URL(s)
+]
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
@@ -175,7 +179,7 @@ async def list_of_students(db:Session=Depends(get_db), page: int = 1, page_size:
     return paginated_items
 
 
-@app.post("/token", response_model=Token, status_code=status.HTTP_201_CREATED)
+@app.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
     user = authenticate_user(login.username, login.password, db)
     if not user:
