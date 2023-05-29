@@ -17,7 +17,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:4200"],
+    allow_origins=["http://localhost", "http://localhost:4200", "https://your-render-domain.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -183,7 +183,7 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
-    token = create_access_token(user.username, user.id, timedelta(minutes=2))
+    token = create_access_token(user.username, user.id, timedelta(minutes=60))
     response.set_cookie(key="access_token", value=token, httponly=True, samesite="None", secure=not is_local,)
     return {'access_token': token, 'token_type': 'bearer'}
 
