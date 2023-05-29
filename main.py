@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 import models
@@ -24,6 +25,8 @@ app.add_middleware(
 
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
+
+is_local = os.getenv("ENV") == "local"
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
@@ -181,7 +184,7 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
     token = create_access_token(user.username, user.id, timedelta(minutes=2))
-    response.set_cookie(key="access_token", value=token, httponly=True, samesite="None", secure=True)
+    response.set_cookie(key="access_token", value=token, httponly=True, samesite="None", secure=not is_local,)
     return {'access_token': token, 'token_type': 'bearer'}
 
 
