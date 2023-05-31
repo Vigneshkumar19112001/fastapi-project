@@ -10,7 +10,12 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, date
 from starlette import status
+from cryptography.fernet import Fernet
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from base64 import b64encode, b64decode
 import re
+
 
 
 app = FastAPI()
@@ -25,6 +30,9 @@ app.add_middleware(
 
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
+PASSWORD_SECRET_KEY = b'\xce\xd0\x18{](\x89t\x89"q\x06e\x98\xa8N'
+# b'Lor\xab\xd4v\x83U\xfc\x16\xdc\xcb\xcc}\xb9~'
+cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
 
 is_local = os.getenv("ENV") == "local"
 
@@ -45,6 +53,10 @@ def hash_passord(pwd):
 
 def check_password(password, pwd):
     return bcrypt_context.verify(password, pwd)
+
+def decode_password(password):
+    decoded_password = unpad(cipher.decrypt(b64decode(password)), AES.block_size).decode()
+    return decode_password
 
 def authenticate_user(username: str, pwd: str, db):
     user = db.query(models.StudentTable).filter(models.StudentTable.username == username).first() or db.query(models.StudentTable).filter(models.StudentTable.email == username).first()
@@ -179,7 +191,7 @@ async def list_of_students(db:Session=Depends(get_db), page: int = 1, page_size:
 
 @app.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
-    user = authenticate_user(login.username, login.password, db)
+    user = authenticate_user(login.username, decode_password(login.password), db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
