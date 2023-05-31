@@ -55,9 +55,10 @@ def check_password(password, pwd):
 
 def decrypt_password(password):
     try:
-        padded_password = cipher.decrypt(b64decode(password))
-        decoded_password = unpad(padded_password, AES.block_size).decode()
-        return decoded_password
+        decoded_password = b64decode(password)
+        decrypted_password = cipher.decrypt(decoded_password)
+        unpadded_password = decrypted_password.rstrip(b'\0')
+        return unpadded_password.decode()
     except:
         return "encoding failed"
 
@@ -190,7 +191,7 @@ async def list_of_students(db:Session=Depends(get_db), page: int = 1, page_size:
 
 @app.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
-    user = authenticate_user(login.username, decrypt_password(login.password), db)
+    user = authenticate_user(login.username, login.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
