@@ -53,8 +53,9 @@ def hash_passord(pwd):
 def check_password(password, pwd):
     return bcrypt_context.verify(password, pwd)
 
-def decode_password(password):
-    decoded_password = unpad(cipher.decrypt(b64decode(password)), AES.block_size).decode()
+def decrypt_password(password):
+    padded_password = cipher.decrypt(b64decode(password))
+    decoded_password = unpad(padded_password, AES.block_size).decode()
     return decoded_password
 
 def authenticate_user(username: str, pwd: str, db):
@@ -186,7 +187,7 @@ async def list_of_students(db:Session=Depends(get_db), page: int = 1, page_size:
 
 @app.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_for_access_token(response: Response, login: Login, db:Session=Depends(get_db)):
-    user = authenticate_user(login.username, decode_password(login.password), db)
+    user = authenticate_user(login.username, decrypt_password(login.password), db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
