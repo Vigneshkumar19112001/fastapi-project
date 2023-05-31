@@ -55,7 +55,7 @@ def check_password(password, pwd):
 
 def decode_password(password):
     decoded_password = unpad(cipher.decrypt(b64decode(password)), AES.block_size).decode()
-    return decode_password
+    return decoded_password
 
 def authenticate_user(username: str, pwd: str, db):
     user = db.query(models.StudentTable).filter(models.StudentTable.username == username).first() or db.query(models.StudentTable).filter(models.StudentTable.email == username).first()
