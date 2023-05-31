@@ -54,9 +54,12 @@ def check_password(password, pwd):
     return bcrypt_context.verify(password, pwd)
 
 def decrypt_password(password):
-    padded_password = cipher.decrypt(b64decode(password))
-    decoded_password = unpad(padded_password, AES.block_size).decode()
-    return decoded_password
+    try:
+        padded_password = cipher.decrypt(b64decode(password))
+        decoded_password = unpad(padded_password, AES.block_size).decode()
+        return decoded_password
+    except:
+        return "encoding failed"
 
 def authenticate_user(username: str, pwd: str, db):
     user = db.query(models.StudentTable).filter(models.StudentTable.username == username).first() or db.query(models.StudentTable).filter(models.StudentTable.email == username).first()
