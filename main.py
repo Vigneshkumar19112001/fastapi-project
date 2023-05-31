@@ -133,10 +133,6 @@ class Login(BaseModel):
     username: str = Field(...,min_length=4)
     password: str = Field(...,min_length=8)
 
-    @validator('password')
-    def password_validator(cls, value):
-        assert value.isalnum(), 'must be an alphanumeric'
-        return value
 
 class ForgetPassword(BaseModel):
     username: str = Field(...,min_length=4)
