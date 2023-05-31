@@ -10,7 +10,6 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, date
 from starlette import status
-from cryptography.fernet import Fernet
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
