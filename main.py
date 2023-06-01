@@ -22,7 +22,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/", "https://firebase.google.com/", "https://authentication-f6b10.web.app"],
+    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/", "https://authentication-f6b10.web.app", "https://studentregistraion.web.app", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +37,8 @@ cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
 is_local = os.getenv("ENV") == "local"
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
 secret_key = b'06_AFY4rY5lCy6QrPiA3G0OFQKoN06SQUJzr2Iine9U='
 
