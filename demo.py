@@ -1,21 +1,17 @@
-# from Crypto.Cipher import AES
-# from Crypto.Util.Padding import unpad
-# from base64 import b64decode
-# import base64
+from Crypto.Util.Padding import unpad
+from base64 import b64decode
+import base64
+from cryptography.fernet import Fernet
+from Crypto.Cipher import AES
 
-# key = b'\xce\xd0\x18{](\x89t\x89"q\x06e\x98\xa8N'
-# key_string = key.decode('latin1')
-# print(key_string)
+secret_key = b'06_AFY4rY5lCy6QrPiA3G0OFQKoN06SQUJzr2Iine9U='
+cipher_suite = Fernet(secret_key)
+print(type(secret_key))
+print(type(cipher_suite))
+
+def decrypt_password(password):
+    decrypt_data = cipher_suite.decrypt(password.encode())
+    print(decrypt_data.decode())
 
 
-# encrypted_data = 'sp1Tcj+ODWS9TZ3DCHHTQS3NX4I3q6mg0SS5WSYITTE='  # The encrypted data obtained from the frontend
-
-# def decrypt_password(encrypted_password):
-#     key = b'encryptionKey'  # Same encryption key used in the frontend
-#     encrypted_password = base64.b64decode(encrypted_password)
-#     cipher = AES.new(key, AES.MODE_ECB)
-#     decrypted_password = unpad(cipher.decrypt(encrypted_password), AES.block_size).decode('utf-8')
-#     return decrypted_password
-
-# decrypt_password(encrypted_data)
-
+decrypt_password("U2FsdGVkX18jN23EKuAtXf8eNv55c3Oyw0dCe39jIVs=")

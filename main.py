@@ -14,6 +14,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 import re
+from cryptography.fernet import Fernet
 
 
 
@@ -21,7 +22,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/"],
+    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/", "https://firebase.google.com/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +38,10 @@ is_local = os.getenv("ENV") == "local"
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
+secret_key = b'06_AFY4rY5lCy6QrPiA3G0OFQKoN06SQUJzr2Iine9U='
+
+# Initialize the Fernet cipher with the generated key
+cipher_suite = Fernet(secret_key)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -55,10 +60,8 @@ def check_password(password, pwd):
 
 def decrypt_password(password):
     try:
-        decoded_password = b64decode(password)
-        decrypted_password = cipher.decrypt(decoded_password)
-        unpadded_password = decrypted_password.rstrip(b'\0')
-        return unpadded_password.decode()
+        decrypt_data = cipher_suite.decrypt(password.encode())
+        return decrypt_data.decode()
     except:
         return "encoding failed"
 
@@ -242,3 +245,15 @@ async def delete_user(id: int, db:Session=Depends(get_db)):
         return "user deleted successfully"
     else:
         return "user not found"
+    
+
+@app.post("/encrypt")
+def encrypt_data(data: str):
+    encrypted_data = cipher_suite.encrypt(data.encode())
+    return {"encrypted_data": encrypted_data}
+
+
+@app.post("/decrypt")
+def decrypt_data(data: str):
+    decrypted_data = cipher_suite.decrypt(data.encode())
+    return {"decrypted_data": decrypted_data.decode()}
