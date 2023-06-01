@@ -22,7 +22,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/", "https://firebase.google.com/"],
+    allow_origins=["http://localhost:8000", "http://localhost:4200", "https://your-render-domain.com", "https://onrender.com/", "https://firebase.google.com/", "https://authentication-f6b10.web.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -139,7 +139,7 @@ class UserVerification(BaseModel):
 
 class Login(BaseModel):
     username: str = Field(...,min_length=4)
-    password: str = Field(...,min_length=8)
+    password: str
 
 
 class ForgetPassword(BaseModel):
