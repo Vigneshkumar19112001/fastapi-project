@@ -15,6 +15,7 @@ from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 import re
 from cryptography.fernet import Fernet
+import binascii
 
 
 
@@ -30,20 +31,13 @@ app.add_middleware(
 
 SECRET_KEY = "nothing"
 ALGORITHM = "HS256"
-PASSWORD_SECRET_KEY = b'\xce\xd0\x18{](\x89t\x89"q\x06e\x98\xa8N'
-# b'Lor\xab\xd4v\x83U\xfc\x16\xdc\xcb\xcc}\xb9~'
-cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
+PASSWORD_SECRET_KEY = binascii.unhexlify("206c10c99d6246f784005331e384df6d13e2056b2d0037bef81de611efb62e03")
 
 is_local = os.getenv("ENV") == "local"
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
-secret_key = b'06_AFY4rY5lCy6QrPiA3G0OFQKoN06SQUJzr2Iine9U='
-
-# Initialize the Fernet cipher with the generated key
-cipher_suite = Fernet(secret_key)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -58,12 +52,14 @@ def hash_passord(pwd):
     return bcrypt_context.hash(pwd)
 
 def check_password(password, pwd):
-    return bcrypt_context.verify(password, pwd)
+    return bcrypt_context.verify(decrypt_password(password), pwd)
 
-def decrypt_password(password):
+def decrypt_password(password: str):
     try:
-        decrypt_data = cipher_suite.decrypt(password.encode())
-        return decrypt_data.decode()
+        cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
+        decrypted_bytes = cipher.decrypt(b64decode(password.encode('utf-8')))
+        decrypted_password = unpad(decrypted_bytes, AES.block_size).decode('utf-8')
+        return decrypted_password
     except:
         return "encoding failed"
 
@@ -201,7 +197,7 @@ async def login_for_access_token(response: Response, login: Login, db:Session=De
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Could not validate user")
     token = create_access_token(user.username, user.id, timedelta(minutes=60))
-    response.set_cookie(key="access_token", value=token, httponly=True, samesite="None", secure=not is_local,)
+    response.set_cookie("access_token", value=token, httponly=True, samesite="None", secure=not is_local,)
     return {'access_token': token, 'token_type': 'bearer'}
 
 
@@ -251,11 +247,15 @@ async def delete_user(id: int, db:Session=Depends(get_db)):
 
 @app.post("/encrypt")
 def encrypt_data(data: str):
-    encrypted_data = cipher_suite.encrypt(data.encode())
-    return {"encrypted_data": encrypted_data}
+    cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
+    encrypted_bytes = cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))
+    encrypted_password = b64encode(encrypted_bytes).decode('utf-8')
+    return encrypted_password
 
 
 @app.post("/decrypt")
 def decrypt_data(data: str):
-    decrypted_data = cipher_suite.decrypt(data.encode())
-    return {"decrypted_data": decrypted_data.decode()}
+    cipher = AES.new(PASSWORD_SECRET_KEY, AES.MODE_ECB)
+    decrypted_bytes = cipher.decrypt(b64decode(data.encode('utf-8')))
+    decrypted_password = unpad(decrypted_bytes, AES.block_size).decode('utf-8')
+    return decrypted_password
